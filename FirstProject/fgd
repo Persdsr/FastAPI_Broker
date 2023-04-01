@@ -1,0 +1,56 @@
+from enum import Enum
+from typing import List, Optional
+
+from fastapi import FastAPI
+from pydantic import BaseModel, Field
+
+app = FastAPI(
+    title='Trading App'
+)
+
+fake_users = [
+    {'id': 1, 'role': 'admin', 'name': 'Bob'},
+    {'id': 2, 'role': 'investor', 'name': 'John'},
+    {'id': 3, 'role': 'trader', 'name': 'Mike'},
+    {'id': 4, 'role': 'trader', 'name': 'Walter', 'degree': [{'year': 5, 'position': 'middle'}]}
+]
+
+class DegreeType(Enum):
+    junior = 'junior'
+    middle = 'middle'
+    senior = 'senior'
+
+
+class Degree(BaseModel):
+    year: int
+    position: DegreeType
+
+
+class User(BaseModel):
+    id: int
+    role: str
+    name: str
+    degree: Optional[List[Degree]] = []
+
+@app.get('/users/{user_id}', response_model=List[User])
+def get_user(user_id: int):
+    return [user for user in fake_users if user.get('id') == user_id]
+
+
+fake_trades = [
+    {'id': 1, 'sell': 'buy', 'V': 'BTC', 'amount': 2.11},
+    {'id': 2, 'sell': 'get', 'V': 'ETH', 'amount': 2.11}
+]
+
+class Trades(BaseModel):
+    id: int
+    sell: str
+    buy: str
+    V: str
+    amount: float = Field(ge=0)
+    degree: List[Degree]
+
+@app.post('/trades/')
+def post_trade(trade: List[Trades]):
+    fake_trades.append(trade)
+    return {'status_code': 200, 'trades': fake_trades}
